@@ -1,0 +1,59 @@
+.analysis-panel {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.analysis-section {
+  margin-top: 20px;
+}
+
+.analysis-section:first-child {
+  margin-top: 0;
+}
+
+.indicator-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.indicator-tag {
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.assessment-score {
+  margin-top: 15px;
+}
+
+.score-label {
+  font-weight: bold;
+  color: #495057;
+  margin-bottom: 5px;
+}
+
+.score-value {
+  font-size: 24px;
+  color: #212529;
+  margin-bottom: 10px;
+}
+
+.score-bar {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  background: #0d6efd;
+  transition: width 0.3s ease;
+} 

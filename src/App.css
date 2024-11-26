@@ -1,0 +1,48 @@
+.app {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.MuiContainer-root {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.editor-container {
+  margin-bottom: 2rem;
+}
+
+.analysis-container {
+  margin-top: 2rem;
+}
+
+.guidelines-container {
+  position: sticky;
+  top: 2rem;
+}
+
+.stats-container {
+  margin-top: 2rem;
+}
+
+.MuiPaper-root {
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.MuiPaper-root:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.editor-input {
+  background: white;
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+.pattern-chart {
+  margin-top: 1rem;
+}
+
+.recommendations {
+  margin-top: 1rem;
+} 

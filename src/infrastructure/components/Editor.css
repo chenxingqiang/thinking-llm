@@ -1,0 +1,33 @@
+.editor-card {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.editor-textarea {
+  margin: 16px 0;
+}
+
+.editor-metrics {
+  margin: 16px 0;
+}
+
+.word-count-progress {
+  margin-top: 8px;
+}
+
+.thinking-patterns {
+  margin-top: 16px;
+}
+
+.thinking-patterns .MuiChip-root {
+  margin: 4px;
+}
+
+.editor {
+  margin: 2rem 0;
+}
+
+.editor-input {
+  background: white;
+  border-radius: 8px;
+} 
