@@ -1,22 +1,17 @@
 import React from 'react';
-import { Container, Grid, Box, Typography, Pagination } from '@mui/material';
+import { Container, Grid, Box, Typography } from '@mui/material';
 import { ProtocolSearch } from '../components/search/ProtocolSearch';
 import { ProtocolCard } from '../components/common/ProtocolCard';
 import { useProtocolSearch } from '../hooks/useProtocolSearch';
-import { useProtocolExplore } from '../hooks/useProtocolExplore';
 import { Protocol } from '../types/protocol';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { Loading } from '../components/common/Loading';
 
 export const ExploreProtocols: React.FC = () => {
-  const { search, selectedTags } = useProtocolSearch();
-  const { protocols, totalPages, currentPage, setCurrentPage, loading, error } = useProtocolExplore({
-    search,
-    tags: selectedTags,
-  });
+  const { searchQuery, setSearchQuery, protocols, loading, error } = useProtocolSearch();
 
   if (loading) return <Loading message="Loading protocols..." />;
-  if (error) return <div>Error loading protocols</div>;
+  if (error) return <div>Error loading protocols: {error}</div>;
 
   return (
     <Container maxWidth="lg">
@@ -24,7 +19,10 @@ export const ExploreProtocols: React.FC = () => {
         <Typography variant="h4" gutterBottom>
           Explore Protocols
         </Typography>
-        <ProtocolSearch />
+        <ProtocolSearch
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
       </Box>
       <Grid container spacing={3}>
         {protocols.map((protocol: Protocol) => (
@@ -34,15 +32,14 @@ export const ExploreProtocols: React.FC = () => {
             </ErrorBoundary>
           </Grid>
         ))}
+        {protocols.length === 0 && (
+          <Grid item xs={12}>
+            <Typography variant="body1" color="text.secondary" align="center">
+              No protocols found. Try adjusting your search.
+            </Typography>
+          </Grid>
+        )}
       </Grid>
-      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-        <Pagination
-          count={totalPages}
-          page={currentPage}
-          onChange={(_, page) => setCurrentPage(page)}
-          color="primary"
-        />
-      </Box>
     </Container>
   );
-}; 
+};

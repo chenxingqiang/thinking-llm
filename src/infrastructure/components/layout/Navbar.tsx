@@ -1,17 +1,23 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button } from '@mui/material';
+import { supabase } from '../../../lib/supabase';
+import type { User } from '@supabase/supabase-js';
 
-export function Navbar() {
-  const [user, setUser] = React.useState<any>(null);
+interface NavbarProps {
+  user?: User | null;
+}
 
-  React.useEffect(() => {
+export const Navbar: React.FC<NavbarProps> = ({ user }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(user);
+
+  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+      setCurrentUser(user);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      setCurrentUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -43,7 +49,7 @@ export function Navbar() {
             </div>
           </div>
           <div className="flex items-center">
-            {user ? (
+            {currentUser ? (
               <div className="flex items-center space-x-4">
                 <Link
                   to="/profile"
@@ -71,4 +77,4 @@ export function Navbar() {
       </div>
     </nav>
   );
-} 
+}

@@ -15,15 +15,18 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Collapse,
 } from '@mui/material'
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
   FileCopy as CopyIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
-import { Template, templateService } from '../../services/supabase'
+import { Template, templateService, thinkingService, ThinkingStep, ThinkingGuideline, ThinkingFramework } from '../../services/supabase'
 
 export const TemplateList = () => {
   const navigate = useNavigate()
@@ -32,10 +35,26 @@ export const TemplateList = () => {
   const [error, setError] = useState<string | null>(null)
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null)
+  const [templateDetails, setTemplateDetails] = useState<{
+    steps: ThinkingStep[]
+    guidelines: ThinkingGuideline[]
+    frameworks: ThinkingFramework[]
+  }>({
+    steps: [],
+    guidelines: [],
+    frameworks: [],
+  })
 
   useEffect(() => {
     loadTemplates()
   }, [])
+
+  useEffect(() => {
+    if (expandedTemplate) {
+      loadTemplateDetails(expandedTemplate)
+    }
+  }, [expandedTemplate])
 
   const loadTemplates = async () => {
     try {
@@ -48,6 +67,20 @@ export const TemplateList = () => {
       setError('Failed to load templates. Please try again later.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTemplateDetails = async (templateId: string) => {
+    try {
+      const [steps, guidelines, frameworks] = await Promise.all([
+        thinkingService.getSteps(templateId),
+        thinkingService.getGuidelines(templateId),
+        thinkingService.getFrameworks(templateId),
+      ])
+      setTemplateDetails({ steps, guidelines, frameworks })
+    } catch (err) {
+      console.error('Failed to load template details:', err)
+      setError('Failed to load template details. Please try again later.')
     }
   }
 
@@ -80,6 +113,10 @@ export const TemplateList = () => {
 
   const handleCreateFromTemplate = (template: Template) => {
     navigate('/protocol/create', { state: { template } })
+  }
+
+  const handleExpandClick = (templateId: string) => {
+    setExpandedTemplate(expandedTemplate === templateId ? null : templateId)
   }
 
   if (loading) {
@@ -129,67 +166,122 @@ export const TemplateList = () => {
                 mb: 2,
                 bgcolor: 'background.paper',
                 borderRadius: 1,
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
+                flexDirection: 'column',
+                alignItems: 'stretch',
               }}
-              button
-              onClick={() => handlePreview(template)}
             >
-              <ListItemText
-                primary={template.title}
-                secondary={
-                  <Box>
-                    <Typography variant="body2" color="textSecondary" noWrap>
-                      {template.description || 'No description'}
-                    </Typography>
-                    {template.category && (
-                      <Box mt={1}>
-                        <Chip
-                          size="small"
-                          label={template.category}
-                          color="primary"
-                          variant="outlined"
-                        />
-                      </Box>
-                    )}
-                  </Box>
-                }
-              />
-              <ListItemSecondaryAction>
+              <Box display="flex" alignItems="center">
                 <IconButton
-                  edge="end"
-                  aria-label="use template"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleCreateFromTemplate(template)
-                  }}
+                  size="small"
+                  onClick={() => handleExpandClick(template.id)}
                   sx={{ mr: 1 }}
                 >
-                  <CopyIcon />
+                  {expandedTemplate === template.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </IconButton>
-                <IconButton
-                  edge="end"
-                  aria-label="edit"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleEdit(template.id)
-                  }}
-                  sx={{ mr: 1 }}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  edge="end"
-                  aria-label="delete"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDelete(template)
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </ListItemSecondaryAction>
+                <ListItemText
+                  primary={template.title}
+                  secondary={
+                    <Box>
+                      <Typography variant="body2" color="textSecondary" noWrap>
+                        {template.description || 'No description'}
+                      </Typography>
+                      {template.category && (
+                        <Box mt={1}>
+                          <Chip
+                            size="small"
+                            label={template.category}
+                            color="primary"
+                            variant="outlined"
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                  }
+                />
+                <ListItemSecondaryAction>
+                  <IconButton
+                    edge="end"
+                    aria-label="use template"
+                    onClick={() => handleCreateFromTemplate(template)}
+                    sx={{ mr: 1 }}
+                  >
+                    <CopyIcon />
+                  </IconButton>
+                  <IconButton
+                    edge="end"
+                    aria-label="edit"
+                    onClick={() => handleEdit(template.id)}
+                    sx={{ mr: 1 }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={() => handleDelete(template)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </ListItemSecondaryAction>
+              </Box>
+
+              <Collapse in={expandedTemplate === template.id}>
+                <Box p={2}>
+                  {templateDetails.steps.length > 0 && (
+                    <Box mb={2}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Thinking Steps
+                      </Typography>
+                      <List dense>
+                        {templateDetails.steps.map((step) => (
+                          <ListItem key={step.id}>
+                            <ListItemText
+                              primary={step.name}
+                              secondary={step.description}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  )}
+
+                  {templateDetails.guidelines.length > 0 && (
+                    <Box mb={2}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Guidelines
+                      </Typography>
+                      <List dense>
+                        {templateDetails.guidelines.map((guideline) => (
+                          <ListItem key={guideline.id}>
+                            <ListItemText
+                              primary={guideline.title}
+                              secondary={guideline.description}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  )}
+
+                  {templateDetails.frameworks.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Frameworks
+                      </Typography>
+                      <List dense>
+                        {templateDetails.frameworks.map((framework) => (
+                          <ListItem key={framework.id}>
+                            <ListItemText
+                              primary={framework.name}
+                              secondary={framework.description}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Box>
+                  )}
+                </Box>
+              </Collapse>
             </ListItem>
           ))}
         </List>

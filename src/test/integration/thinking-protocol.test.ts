@@ -1,5 +1,6 @@
 /// <reference types="vitest/globals" />
 import { StandardsEvaluator } from '../../core/evaluators/standards-evaluator';
+import type { ThinkingMetrics } from '../../types/evaluation';
 
 describe('Thinking Protocol Integration Tests', () => {
   const evaluator = new StandardsEvaluator();
@@ -11,7 +12,7 @@ describe('Thinking Protocol Integration Tests', () => {
       This seems interesting because...
     `;
 
-    const result = evaluator.evaluateThinkingProcess(simpleContent);
+    const result: ThinkingMetrics = evaluator.evaluateThinkingProcess(simpleContent);
     expect(result).toBeDefined();
     expect(result.overallScore).toBeGreaterThan(0);
   });
@@ -23,8 +24,9 @@ describe('Thinking Protocol Integration Tests', () => {
       Actually, I see a pattern here.
     `;
 
-    const result = evaluator.evaluateThinkingProcess(content);
+    const result: ThinkingMetrics = evaluator.evaluateThinkingProcess(content);
     expect(result.overallScore).toBeGreaterThan(0);
-    expect(result.passesThresholds).toBe(true);
+    expect(result.meetsStandards).toBe(true);
+    expect(result.naturalLanguageScore).toBeGreaterThan(0.7);
   });
 }); 

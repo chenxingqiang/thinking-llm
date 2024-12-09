@@ -113,4 +113,4 @@ export interface SentimentAnalysis {
   keywords: string[];
 }
 
-export { DEFAULT_PROTOCOL } from '../core/configs/default-protocol'; 
+export { DEFAULT_PROTOCOL } from '../../core/configs/default-protocol'; 

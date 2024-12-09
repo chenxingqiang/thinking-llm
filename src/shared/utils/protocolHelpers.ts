@@ -1,10 +1,9 @@
 import { supabase } from './supabase';
 import { handleSupabaseError } from './supabase';
-import type { Protocol } from '../types/protocol';
+import type { Protocol, Collaborator, Author, Category } from '../../types/protocol';
 import type { Database } from './database.types';
 
 type ProtocolRow = Database['public']['Tables']['protocols']['Row'];
-type CollaboratorRole = Database['public']['Tables']['collaborators']['Row']['role'];
 
 interface SearchProtocolsOptions {
   query?: string;
@@ -35,6 +34,35 @@ interface CollaboratorUpdates {
   add?: CollaboratorUpdate[];
   remove?: string[];
   update?: CollaboratorUpdate[];
+}
+
+interface DatabaseProtocol {
+  id: string;
+  title: string;
+  content: string;
+  author_id: string;
+  category_id: string | null;
+  created_at: string;
+  updated_at: string;
+  author: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  }[];
+  category: {
+    id: string;
+    name: string;
+    description: string | null;
+  }[];
+  protocol_tags: {
+    id: string;
+    name: string;
+  }[];
+  collaborators: {
+    user_id: string;
+    can_edit: boolean;
+    can_view: boolean;
+  }[];
 }
 
 export async function searchProtocols(options: SearchProtocolsOptions): Promise<SearchResult | null> {
@@ -101,36 +129,7 @@ export async function searchProtocols(options: SearchProtocolsOptions): Promise<
     }
 
     // Transform data to match Protocol type
-    const protocols = filteredData.map(item => {
-      const protocol: Protocol = {
-        id: item.id,
-        title: item.title,
-        content: item.content,
-        description: item.content,
-        author_id: item.author_id,
-        category_id: item.category_id,
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        author: {
-          id: item.author[0]?.id || '',
-          name: item.author[0]?.display_name || '',
-          avatar_url: item.author[0]?.avatar_url
-        },
-        category: item.category?.[0] ? {
-          id: item.category[0].id,
-          name: item.category[0].name,
-          description: item.category[0].description
-        } : undefined,
-        tags: item.protocol_tags?.map(pt => ({
-          id: pt.tag?.[0]?.id || '',
-          name: pt.tag?.[0]?.name || ''
-        })) || [],
-        rating: 0,
-        downloads: 0,
-        forks: 0
-      };
-      return protocol;
-    });
+    const protocols = filteredData.map(item => transformDatabaseProtocol(item));
 
     return {
       protocols,
@@ -235,4 +234,77 @@ export async function manageCollaborators(
     handleSupabaseError(error);
     return false;
   }
+}
+
+// Only export types that are actually used
+export type ProtocolStatus = 'draft' | 'published' | 'archived';
+
+export function isProtocolEditable(protocol: Protocol): boolean {
+  return protocol.status === 'draft';
+}
+
+export function canUserEditProtocol(protocol: Protocol, userId: string): boolean {
+  return protocol.author.id === userId || 
+         protocol.collaborators?.some((collaborator: Collaborator) => 
+           collaborator.user_id === userId && collaborator.can_edit
+         ) || 
+         false;
+}
+
+export function getProtocolStatusLabel(status: ProtocolStatus): string {
+  const labels = {
+    draft: 'Draft',
+    published: 'Published',
+    archived: 'Archived'
+  };
+  return labels[status] || 'Unknown';
+}
+
+export function formatProtocolDate(date: string): string {
+  return new Date(date).toLocaleDateString();
+}
+
+export function transformDatabaseProtocol(data: DatabaseProtocol): Protocol {
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.content.substring(0, 200) + '...', // Generate description from content
+    content: data.content,
+    status: 'published', // Default status
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    user_id: data.author_id,
+    category_id: data.category_id || undefined,
+    author: transformAuthor(data.author[0]),
+    category: data.category[0] ? transformCategory(data.category[0]) : undefined,
+    tags: data.protocol_tags.map(tag => ({
+      id: tag.id,
+      name: tag.name
+    })),
+    collaborators: data.collaborators.map(transformCollaborator)
+  };
+}
+
+function transformAuthor(authorData: DatabaseProtocol['author'][0]): Author {
+  return {
+    id: authorData.id,
+    name: authorData.display_name || 'Unknown Author',
+    ...(authorData.avatar_url && { avatar_url: authorData.avatar_url })
+  };
+}
+
+function transformCategory(categoryData: DatabaseProtocol['category'][0]): Category {
+  return {
+    id: categoryData.id,
+    name: categoryData.name,
+    ...(categoryData.description && { description: categoryData.description })
+  };
+}
+
+function transformCollaborator(collaboratorData: DatabaseProtocol['collaborators'][0]): Collaborator {
+  return {
+    userId: collaboratorData.user_id,
+    can_edit: collaboratorData.can_edit,
+    can_view: collaboratorData.can_view
+  };
 } 

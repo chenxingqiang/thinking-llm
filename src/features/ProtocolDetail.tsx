@@ -1,49 +1,112 @@
 import React from 'react';
-import { Container, Grid, Paper, Tabs, Tab } from '@mui/material';
-import { useParams } from 'react-router-dom';
-import { ProtocolHeader } from '../components/protocol/ProtocolHeader';
-import { ProtocolContent } from '../components/protocol/ProtocolContent';
-import { ProtocolVersions } from '../components/protocol/ProtocolVersions';
-import { ProtocolComments } from '../components/protocol/ProtocolComments';
-import { ProtocolUsage } from '../components/protocol/ProtocolUsage';
-import { useProtocol } from '../hooks/useProtocol';
-import { Loading } from '../components/common/Loading';
+import { Protocol } from '../types/protocol';
+import { Comment } from '../types/comment';
 
-export const ProtocolDetail: React.FC = () => {
-  const { id = '' } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = React.useState(0);
-  const { protocol, loading, error } = useProtocol(id);
+interface UsageStat {
+  date: string;
+  views: number;
+  likes: number;
+  shares: number;
+}
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
+interface ProtocolDetailProps {
+  protocol: Protocol;
+}
+
+type TabType = 'overview' | 'stats' | 'comments';
+
+export function ProtocolDetail({ protocol }: ProtocolDetailProps) {
+  const [activeTab, setActiveTab] = React.useState<TabType>('overview');
+  const [usageStats, setUsageStats] = React.useState<UsageStat[]>([]);
+  const [comments, setComments] = React.useState<Comment[]>([]);
+
+  React.useEffect(() => {
+    const fetchUsageStats = async () => {
+      try {
+        const stats: UsageStat[] = await fetch(`/api/protocols/${protocol.id}/stats`).then(res => res.json());
+        setUsageStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch usage stats:', error);
+      }
+    };
+
+    const fetchComments = async () => {
+      try {
+        const fetchedComments: Comment[] = await fetch(`/api/protocols/${protocol.id}/comments`).then(res => res.json());
+        setComments(fetchedComments);
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+      }
+    };
+
+    fetchUsageStats();
+    fetchComments();
+  }, [protocol.id]);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="overview-section">
+            <h2>{protocol.title}</h2>
+            <p>{protocol.description}</p>
+            <div className="content">{protocol.content}</div>
+          </div>
+        );
+      case 'stats':
+        return (
+          <div className="stats-section">
+            {usageStats.map((stat) => (
+              <div key={stat.date} className="stat-item">
+                <div className="stat-date">{stat.date}</div>
+                <div className="stat-numbers">
+                  <span>Views: {stat.views}</span>
+                  <span>Likes: {stat.likes}</span>
+                  <span>Shares: {stat.shares}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      case 'comments':
+        return (
+          <div className="comments-section">
+            {comments.map((comment) => (
+              <div key={comment.id} className="comment">
+                <div className="comment-content">{comment.content}</div>
+                <div className="comment-meta">
+                  <span>Posted: {new Date(comment.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+    }
   };
 
-  if (loading) return <Loading />;
-  if (error || !protocol) return <div>Error loading protocol</div>;
-
   return (
-    <Container maxWidth="lg">
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <ProtocolHeader protocol={protocol} />
-        </Grid>
-        <Grid item xs={12}>
-          <Paper>
-            <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tab label="Overview" />
-              <Tab label="Versions" />
-              <Tab label="Usage" />
-              <Tab label="Comments" />
-            </Tabs>
-          </Paper>
-        </Grid>
-        <Grid item xs={12}>
-          {activeTab === 0 && <ProtocolContent protocol={protocol} />}
-          {activeTab === 1 && <ProtocolVersions />}
-          {activeTab === 2 && <ProtocolUsage />}
-          {activeTab === 3 && <ProtocolComments />}
-        </Grid>
-      </Grid>
-    </Container>
+    <div className="protocol-detail">
+      <div className="tabs">
+        <button 
+          className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Overview
+        </button>
+        <button 
+          className={`tab ${activeTab === 'stats' ? 'active' : ''}`}
+          onClick={() => setActiveTab('stats')}
+        >
+          Stats
+        </button>
+        <button 
+          className={`tab ${activeTab === 'comments' ? 'active' : ''}`}
+          onClick={() => setActiveTab('comments')}
+        >
+          Comments
+        </button>
+      </div>
+      {renderTabContent()}
+    </div>
   );
-}; 
+} 

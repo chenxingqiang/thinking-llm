@@ -1,4 +1,57 @@
-# 思维协议项目
+# Thinking Protocol Project | 思维协议项目
+
+[English](#english) | [中文](#chinese)
+
+## English
+
+### Overview
+
+This project, inspired by the thinking-claude project, aims to provide a comprehensive set of thinking protocols to assist different roles (such as academic writers, programmers, software product designers, testers, and bug fixers) in their workflow. It ensures high-quality thinking and decision-making based on deep understanding rather than hasty judgments.
+
+### Installation
+
+```bash
+# Clone the repository
+git clone [your-repo-url]
+
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your actual values
+
+# Start development server
+pnpm dev
+
+# Run tests
+pnpm test
+```
+
+### Project Structure
+
+- **extension/**: Browser extension for code block management
+  - **content.js**: Implements `CodeBlockCollapser` class for handling code block folding and copying
+  - **manifest.json**: Browser extension manifest file
+- **famous_thinking_mode/**: Contains various thinking protocols
+- **src/**: Main application source code
+- **supabase/**: Supabase related configurations and migrations
+
+### Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+### License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Chinese
 
 ## 项目概述
 
@@ -70,3 +123,7 @@
 ## 联系方式
 
 如有疑问或需要进一步沟通，请联系chengxingqiang（<chen.xingqiang@iechor.com>）。欢迎关注GitHub账号获取项目最新动态。
+
+## License
+
+MIT License

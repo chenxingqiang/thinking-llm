@@ -1,4 +1,4 @@
-import { Outlet, Routes, Route, Router } from 'react-router-dom'
+import { Outlet, Routes, Route, BrowserRouter } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Navbar } from './components/layout/Navbar'
 import { Box, Container, CircularProgress, Alert } from '@mui/material'
@@ -7,7 +7,7 @@ import { TemplateForm } from './components/templates/TemplateForm'
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   useEffect(() => {
     // Simulate initialization
@@ -35,7 +35,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <BrowserRouter>
       <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
         <Navbar />
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
@@ -51,7 +51,7 @@ function App() {
           </Routes>
         </Box>
       </Box>
-    </Router>
+    </BrowserRouter>
   )
 }
 

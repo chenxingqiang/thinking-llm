@@ -27,6 +27,13 @@ export default function ProtocolEdit() {
     description: '',
     content: '',
     status: 'active',
+    template_id: undefined,
+    category_id: undefined,
+    author: {
+      id: '',
+      name: ''
+    },
+    tags: []
   })
 
   useEffect(() => {
@@ -39,8 +46,10 @@ export default function ProtocolEdit() {
     setLoading(true)
     try {
       const data = await protocolService.getById(protocolId)
-      setProtocol(data)
-      setError(null)
+      if (data) {
+        setProtocol(data)
+        setError(null)
+      }
     } catch (err) {
       console.error('Failed to load protocol:', err)
       setError('Failed to load protocol. Please try again later.')
@@ -58,39 +67,62 @@ export default function ProtocolEdit() {
     }))
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
+    setError(null)
+
     try {
-      if (!protocol.title || !protocol.content) {
-        throw new Error('Title and content are required')
+      const protocolData = {
+        title: protocol.title || '',
+        description: protocol.description || '',
+        content: protocol.content || '',
+        status: protocol.status || 'active',
+        template_id: protocol.template_id,
+        category_id: protocol.category_id,
+        author: protocol.author || {
+          id: '',
+          name: ''
+        },
+        tags: protocol.tags || []
       }
 
+      let savedProtocol: Protocol | null = null
       if (id === 'new') {
-        const newProtocol = await protocolService.create({
-          title: protocol.title,
-          description: protocol.description || '',
-          content: protocol.content,
-          status: protocol.status as 'active' | 'archived',
-        })
-        await activityService.create({
-          type: 'create',
-          protocol_id: newProtocol.id,
-          protocol_title: newProtocol.title,
-        })
+        savedProtocol = await protocolService.create(protocolData)
+        if (savedProtocol) {
+          await activityService.create({
+            protocol_id: savedProtocol.id,
+            action_type: 'create',
+            description: `Created new protocol: ${savedProtocol.title}`,
+            metadata: {
+              changes: ['initial_creation']
+            }
+          })
+        }
       } else if (id) {
-        const updatedProtocol = await protocolService.update(id, protocol)
-        await activityService.create({
-          type: 'edit',
-          protocol_id: updatedProtocol.id,
-          protocol_title: updatedProtocol.title,
-        })
+        savedProtocol = await protocolService.update(id, protocolData)
+        if (savedProtocol) {
+          await activityService.create({
+            protocol_id: savedProtocol.id,
+            action_type: 'update',
+            description: `Updated protocol: ${savedProtocol.title}`,
+            metadata: {
+              changes: ['content', 'description', 'tags'].filter(field => 
+                JSON.stringify(protocol[field as keyof Protocol]) !== 
+                JSON.stringify(savedProtocol?.[field as keyof Protocol])
+              )
+            }
+          })
+        }
       }
 
-      navigate('/')
+      if (savedProtocol) {
+        navigate(`/protocols/${savedProtocol.id}`)
+      }
     } catch (err) {
       console.error('Failed to save protocol:', err)
-      setError(err instanceof Error ? err.message : 'Failed to save protocol')
+      setError('Failed to save protocol. Please try again later.')
     } finally {
       setLoading(false)
     }

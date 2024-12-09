@@ -2,7 +2,7 @@ import {
   ProtocolConfig, 
   ValidationResult,
   ThinkingMetrics 
-} from '../../types';
+} from '../../../types/thinking';
 
 export class ProtocolValidator {
   constructor(private config: ProtocolConfig) {}

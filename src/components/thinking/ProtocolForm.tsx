@@ -9,9 +9,9 @@ import {
   MenuItem,
 } from '@mui/material'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Protocol, Template, protocolService } from '../../services/supabase'
+import { Protocol, Template, protocolService, activityService } from '../../services/supabase'
 
-type ProtocolFormData = Omit<Protocol, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'template_id'>
+type ProtocolFormData = Omit<Protocol, 'id' | 'created_at' | 'user_id' | 'updated_at' | 'template_id'>
 
 export const ProtocolForm = () => {
   const navigate = useNavigate()
@@ -66,27 +66,35 @@ export const ProtocolForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    try {
-      setLoading(true)
-      setError(null)
+    setLoading(true)
+    setError(null)
 
-      const template = location.state?.template as Template | undefined
-      const templateId = template?.id
+    try {
+      const protocolData: Omit<Protocol, 'id' | 'created_at' | 'user_id' | 'updated_at'> = {
+        title: formData.title,
+        description: formData.description,
+        content: formData.content,
+        status: formData.status || 'active',
+        template_id: location.state?.template?.id || null,
+      }
 
       if (id) {
-        await protocolService.update(id, formData)
+        await protocolService.update(id, protocolData)
       } else {
-        await protocolService.create({
-          ...formData,
-          template_id: templateId || null,
-        })
+        const newProtocol = await protocolService.create(protocolData)
+        if (newProtocol) {
+          await activityService.create({
+            type: 'create',
+            protocol_id: newProtocol.id,
+            protocol_title: newProtocol.title,
+          })
+        }
       }
 
       navigate('/')
     } catch (err) {
       console.error('Failed to save protocol:', err)
-      setError(err instanceof Error ? err.message : 'Failed to save protocol. Please try again later.')
+      setError('Failed to save protocol. Please try again.')
     } finally {
       setLoading(false)
     }

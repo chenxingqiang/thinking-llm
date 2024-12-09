@@ -9,11 +9,17 @@ import {
   MenuItem,
 } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Template, templateService } from '../../services/supabase'
+import { templateService } from '../../services/supabase'
 
 const CATEGORIES = ['General', 'Decision Making', 'Problem Solving', 'Analysis', 'Research', 'Other']
 
-type TemplateFormData = Omit<Template, 'id' | 'created_at' | 'updated_at' | 'user_id'>
+interface TemplateFormData {
+  title: string
+  description: string
+  content: string
+  category: string
+  status: 'active' | 'archived'
+}
 
 export const TemplateForm = () => {
   const navigate = useNavigate()
@@ -25,6 +31,7 @@ export const TemplateForm = () => {
     description: '',
     content: '',
     category: 'General',
+    status: 'active',
   })
 
   useEffect(() => {
@@ -44,6 +51,7 @@ export const TemplateForm = () => {
           description: template.description || '',
           content: template.content,
           category: template.category || 'General',
+          status: template.status || 'active',
         })
       }
     } catch (err) {
@@ -163,6 +171,21 @@ export const TemplateForm = () => {
             fontFamily: 'monospace',
           }}
         />
+      </Box>
+
+      <Box mb={3}>
+        <TextField
+          select
+          fullWidth
+          label="Status"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          disabled={loading}
+        >
+          <MenuItem value="active">Active</MenuItem>
+          <MenuItem value="archived">Archived</MenuItem>
+        </TextField>
       </Box>
 
       <Box display="flex" gap={2}>

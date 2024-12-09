@@ -11,7 +11,9 @@ interface CodeBlockProps {
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({ language, value }) => {
   const handleCopy = () => {
-    navigator.clipboard.writeText(value);
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(value);
+    }
   };
 
   return (
